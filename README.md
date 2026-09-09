@@ -12,7 +12,7 @@ This repo is intentionally **not** a production product. There is no real backen
 2. `src/core/di.ts` — composition root. The only place adapters are wired.
 3. `src/domain/` — use cases depend on ports, never on Drizzle or React Native.
 4. `src/data/sync/` — `SyncEngine` + `Outbox` + `MockSyncAdapter`.
-5. `app/` — Expo Router screens. Thin. No SQL, no fetch.
+5. `src/app/` — Expo Router screens. Thin. No SQL, no fetch.
 
 ## Features
 
@@ -29,36 +29,34 @@ This repo is intentionally **not** a production product. There is no real backen
 
 ## Stack
 
-- Expo + Expo Router + TypeScript (strict)
+- Expo SDK 57 + Expo Router + TypeScript (strict)
 - expo-sqlite + Drizzle ORM
-- Zustand (UI state only: theme, session, screen filters)
+- Zustand (theme + demo sync flags)
 - TanStack Query (reads through repositories)
-- Zod
-- victory-native + react-native-skia
+- Custom bar charts (no extra native chart engine)
 - NetInfo, expo-secure-store, expo-notifications, expo-print, expo-sharing
-- Jest + React Native Testing Library
+- Vitest for domain and sync-engine tests
 
 ## Architecture
 
 Paradigm: **local-first + ports/adapters** (lightweight clean architecture).
 
 ```
-app/                    Expo Router — thin screens
-src/
-  core/                 theme, composition root, errors, netinfo
-  domain/               entities, ports, use cases
-  data/
-    db/                 Drizzle schema + migrations
-    repositories/
-    sync/               SyncEngine, Outbox, MockSyncAdapter
-  features/             auth, transactions, budgets, goals, dashboard, settings, export
-  shared/ui/
+src/app/                Expo Router — thin screens
+src/core/               composition root, session, theme, notifications
+src/domain/             entities, ports, use cases
+src/data/
+  db/                   Drizzle schema + SQLite bootstrap
+  repositories/
+  sync/                 SyncEngine, MockSyncAdapter
+src/features/           hooks (auth, transactions, budgets, goals, dashboard, export)
+src/shared/ui/
 ```
 
 Rules:
 
 1. Screens call hooks / use cases only. Zero SQL, zero fetch.
-2. Use cases depend on ports (`AuthPort`, `TransactionRepository`, `SyncPort`), not Drizzle.
+2. Use cases depend on ports (`UserRepository`, `TransactionRepository`, `SyncPort`), not Drizzle.
 3. SQLite is the only source of truth. The mock remote is a mirror.
 4. Every mutation writes locally **and** enqueues an outbox row. `SyncEngine` drains the queue when online.
 5. `src/core/di.ts` wires adapters. No DI framework.
@@ -69,33 +67,31 @@ Amounts are stored as **integer cents**. Default currency: `CLP`.
 
 ## Getting started
 
-> The Expo app is not scaffolded yet. After `npx create-expo-app`, this section becomes the real runbook.
-
 ```bash
 git clone https://github.com/maticlaro/myfinance.git
 cd myfinance
-npx expo install
+npm install
 npx expo start
 ```
 
-Requirements: Node 20+, Expo Go or an iOS Simulator / Android emulator.
+Requirements: Node 20+, Expo Go (SDK 57) or an iOS Simulator / Android emulator.
 
 ```bash
 npm test
 ```
 
+In **Ajustes** you can force offline, inject a sync error, drain the outbox, and export CSV/PDF.
+
 ## Project status
 
-Roadmap (each phase leaves the app runnable):
-
-- Phase 0 — Scaffold, theme, composition root, SQLite schema — Planned
-- Phase 1 — Auth + tab shell — Planned
-- Phase 2 — Transactions CRUD + filters — Planned
-- Phase 3 — Dashboard + charts — Planned
-- Phase 4 — Budgets + savings goals — Planned
-- Phase 5 — Outbox + mock sync + offline banner — Planned
-- Phase 6 — Notifications + CSV/PDF export — Planned
-- Phase 7 — Tests + architecture polish — Planned
+- Phase 0 — Scaffold, theme, composition root, SQLite schema — Done
+- Phase 1 — Auth + tab shell — Done
+- Phase 2 — Transactions CRUD + filters — Done
+- Phase 3 — Dashboard + charts — Done
+- Phase 4 — Budgets + savings goals — Done
+- Phase 5 — Outbox + mock sync + offline banner — Done
+- Phase 6 — Notifications + CSV/PDF export — Done
+- Phase 7 — Tests + architecture polish — Done
 
 ## Out of scope
 
